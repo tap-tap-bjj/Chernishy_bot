@@ -13,17 +13,18 @@ from twocaptcha import TwoCaptcha
 from selenium.webdriver.chrome.options import Options
 import requests
 
+
 class Chernishy:
     def __init__(self, truck_num, pricep_num, start_date, end_date, login, password):
         # Словарь для капчи
         self.dict_resut = {}
         # Создание объекта опций
-        self.options = Options()
-        #self.options.add_argument("--headless")  # Запуск Chrome в режиме без графического интерфейса
-        self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--window-size=1920,1080")
+        options = Options()
+        options.add_argument("--headless")  # Запуск Chrome в режиме без графического интерфейса
+        options.add_argument("--no-sandbox")
+        options.add_argument("--window-size=1920,1080")
         # Браузер и функции
-        self.browser = webdriver.Chrome(options=self.options)
+        self.browser = webdriver.Chrome(options=options)
         self.actions = ActionChains(self.browser)
         self.wait = WebDriverWait(self.browser, 5)
         # Флаг для окончания программы
@@ -37,13 +38,13 @@ class Chernishy:
         self.day_count = (end_date - start_date).days + 1
         self.login = login
         self.password = password
-        self.screenshot_fail = f'screenshot_{self.login}.png'
+        self.screenshot_fail = f'screenshot_fail{self.login}.png'
         self.screenshot_sucsses = f'screenshot_sucsses_{self.login}.png'
 
     def is_element_present(self, how, what):
         try:
             self.browser.find_element(how, what)
-        except NoSuchElementException:
+        except (NoSuchElementException, TimeoutException):
             return False
         return True
 
@@ -121,10 +122,10 @@ class Chernishy:
             self.browser.save_screenshot(self.screenshot_fail)
 
     def new_zayavka(self):
-
         while self.flag == True:
             try:
-                if Chernishy.is_element_present(self, how=By.CSS_SELECTOR, what='#lyt_chk_clone_1'):
+                if Chernishy.is_element_present(self, how=By.CSS_SELECTOR, what='#lyt_chk_clone_1'): # Если выскочило на страницу ввода пароля,
+                    # вводим пароль
                     Chernishy.get_main_srv(self)
                 self.browser.refresh()
                 time.sleep(3)
@@ -150,7 +151,7 @@ class Chernishy:
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#chk_copy ._7m08SzSw'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button'))).click()
 
-                Chernishy.captcha(self)
+                #Chernishy.captcha(self)
 
                 Chernishy.input_day_new(self)
 
@@ -174,10 +175,11 @@ class Chernishy:
                     self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '._3J1cw2n9'))).click()
 
                     try:
-                        slot = WebDriverWait(self.browser, 3).until(
+                        slot = WebDriverWait(self.browser, 0.5).until(
                             EC.element_to_be_clickable((By.CSS_SELECTOR, 'div .slotInactive')))
+                        # выбор времени брони по цифре слота (By.CSS_SELECTOR, '#lyt_slot_clone_11.slotInactive')
                         slot.click()
-                        button = WebDriverWait(self.browser, 3).until(
+                        button = WebDriverWait(self.browser, 1).until(
                             EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button')))
                         button.click()
 
@@ -187,10 +189,10 @@ class Chernishy:
                         print(f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slot.text}')
                         self.bot.send_message(chat_id=chat_id_my,
                                          text=f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slot.text}')
-                        self.flag = False
+                        #self.flag = False
                         self.browser.save_screenshot(self.screenshot_sucsses)
-                        self.browser.quit()
-                        break
+                        #self.browser.quit()
+                        continue
 
                     except TimeoutException:
                         with open("log_chernishy.txt", 'a') as f:
@@ -200,3 +202,68 @@ class Chernishy:
             print(f'Ошибка в input_day_new {str(e)}')
             self.browser.save_screenshot(self.screenshot_fail)
 
+    def change_time(self, truck_number):
+        while self.flag == True:
+            try:
+                if Chernishy.is_element_present(self, how=By.CSS_SELECTOR, what='#lyt_chk_clone_1'):
+                    Chernishy.get_main_srv(self)
+                self.browser.refresh()
+                time.sleep(3)
+                car_row = WebDriverWait(self.browser, 5).until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(text(), '{truck_number}')]")))
+                car_row.click()
+                #time.sleep(1)
+                button_edit = WebDriverWait(self.browser, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#lyt_btn_edit')))
+                button_edit.click()
+                #time.sleep(1)
+                button_reschedule = WebDriverWait(self.browser, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_request_reschedule')))
+                button_reschedule.click()
+
+                #Chernishy.captcha(self)
+
+                Chernishy.input_day_reschedule(self, truck_number)
+
+            except Exception as e:
+                print(f'Ошибка в change_time', str(e))
+                self.browser.save_screenshot(self.screenshot_fail)
+
+    def input_day_reschedule(self, truck_number):
+        try:
+            while self.flag == True:
+                for single_date in [d for d in (self.start_date + timedelta(n) for n in range(self.day_count))]:
+                    day = single_date.strftime("%d.%m.%Y")
+                    calen = self.wait.until(EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, '#lyt_reschedule #dtx_date > div > div.CPJFu7k2 > svg')))
+                    calen.click()
+                    date = WebDriverWait(self.browser, 3).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, '[placeholder="Input date"]')))
+                    date.send_keys(Keys.CONTROL + 'a')
+                    # date.send_keys(Keys.DELETE)
+                    date.send_keys(day)
+                    self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '._3J1cw2n9'))).click()
+
+                    try:
+                        slot = WebDriverWait(self.browser, 0.5).until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, 'div .slotInactive')))
+                        slot.click()
+                        button = WebDriverWait(self.browser, 0.5).until(
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button')))
+                        button.click()
+
+                        self.bot.send_message(chat_id=chat_id_my,
+                                         text=f'Появилось место!!!!!! на {day}: \n{slot.text}')
+                        print(f'Появилось место!!!!!! на {day}: \n{slot.text}')
+                        print(f'Машина {truck_number} перенсена на дату {day}: \n{slot.text}')
+                        self.bot.send_message(chat_id=chat_id_my,
+                                         text=f'Машина {truck_number} перенсена на дату {day}: \n{slot.text}')
+                        #self.flag = False
+                        self.browser.save_screenshot(self.screenshot_sucsses)
+                        self.browser.quit()
+                        break
+
+                    except TimeoutException:
+                        with open("log_chernishy.txt", 'a') as f:
+                            print(f'Нет места для переноса заявки тягача {truck_number} на: {day} тек. время: {datetime.now()}')
+                        continue
+        except Exception as e:
+            print(f'Ошибка в input_day_reschedule {str(e)}')
+            self.browser.save_screenshot(self.screenshot_fail)

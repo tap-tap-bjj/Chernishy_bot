@@ -14,11 +14,11 @@ def new():
 if __name__ == '__main__':
 
     # User var
-    truck_number = 'C612KH39'
+    truck_number = 'C531KH39'
     truck_num = 1 # Номер тягача по списку
     pricep_num = 1 # Номер прицепа по списку
-    start_date = date(2024, 0o2, 0o4) # Диапозон дат в формате ГГГГ, ММ, ДД от -
-    end_date = date(2024, 0o2, 0o4) # - до
+    start_date = date(2024, 0o3, 0o1) # Диапозон дат в формате ГГГГ, ММ, ДД от -
+    end_date = date(2024, 0o3, 0o1) # - до
     login = login_SRV # Логин
     password = password_SRV # Пароль
 
