@@ -17,12 +17,12 @@ import requests
 
 
 class Chernishy:
-    def __init__(self, truck_num, pricep_num, start_date, end_date, login, password):
+    def __init__(self, truck_num, pricep_num, start_date, end_date, time_set, login, password):
         # Словарь для капчи
         self.dict_resut = {}
         # Создание объекта опций
         options = Options()
-        options.add_argument("--headless")  # Запуск Chrome в режиме без графического интерфейса
+        #options.add_argument("--headless")  # Запуск Chrome в режиме без графического интерфейса
         options.add_argument("--no-sandbox")
         options.add_argument("--window-size=1920,1080")
         # Браузер и функции
@@ -39,10 +39,11 @@ class Chernishy:
         self.start_date = start_date
         self.end_date = end_date
         self.day_count = (end_date - start_date).days + 1
+        self.time_set = time_set
         self.login = login
         self.password = password
-        self.screenshot_fail = f'./screenshot_fail{self.login}.png'
-        self.screenshot_sucsses = f'./screenshot_sucsses_{self.login}.png'
+        self.screenshot_fail = f'screenshot_fail{self.login}_{time_set}.png'
+        self.screenshot_sucsses = f'screenshot_sucsses_{self.login}_{time_set}.png'
 
     def is_element_present(self, how, what):
         try:
@@ -133,7 +134,7 @@ class Chernishy:
             return self.browser
         except Exception as e:
             print(f'Oshibka vhoda {str(e)}')
-            self.browser.save_screenshot(self.screenshot_fail)
+            #self.browser.py.save_screenshot(self.screenshot_fail)
 
     def new_zayavka(self):
         while self.flag == True:
@@ -171,7 +172,7 @@ class Chernishy:
 
             except Exception as e:
                 print(f'Ошибка в new_zayavka', str(e))
-                self.browser.save_screenshot(self.screenshot_fail)
+                #self.browser.py.save_screenshot(self.screenshot_fail)
 
     def input_day_new(self):
         try:
@@ -190,22 +191,21 @@ class Chernishy:
 
                     try:
                         slot = WebDriverWait(self.browser, 1).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, '.slotInactive')))
+                            EC.element_to_be_clickable((By.CSS_SELECTOR, f'#lyt_slot_clone_{self.time_set}.slotInactive')))
                         # выбор времени брони по цифре слота (By.CSS_SELECTOR, '#lyt_slot_clone_11.slotInactive')
                         slot.click()
-                        button = WebDriverWait(self.browser, 1).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button')))
-                        button.click()
+                        self.browser.find_element(By.CSS_SELECTOR, '#btn_step_next button').click()
+
                         slotText = slot.text
                         self.bot.send_message(chat_id=chat_id_my,
-                                         text=f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
+                                              text=f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
                         print(f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
                         print(f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
                         self.bot.send_message(chat_id=chat_id_my,
-                                         text=f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
-                        #self.flag = False
-                        self.browser.save_screenshot(self.screenshot_sucsses)
-                        #self.browser.py.quit()
+                                              text=f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
+                        # self.flag = False
+                        #self.browser.py.save_screenshot(self.screenshot_sucsses)
+                        # self.browser.py.quit()
                         continue
 
                     except TimeoutException:
@@ -213,7 +213,7 @@ class Chernishy:
                         continue
         except Exception as e:
             print(f'Ошибка в input_day_new {str(e)}')
-            self.browser.save_screenshot(self.screenshot_fail)
+            #self.browser.py.save_screenshot(self.screenshot_fail)
 
     def change_time(self, truck_number):
         while self.flag == True:
@@ -237,7 +237,7 @@ class Chernishy:
 
             except Exception as e:
                 print(f'Ошибка в change_time', str(e))
-                self.browser.save_screenshot(self.screenshot_fail)
+                #self.browser.py.save_screenshot(self.screenshot_fail)
 
     def input_day_reschedule(self, truck_number):
         try:
@@ -258,19 +258,17 @@ class Chernishy:
                         slot = WebDriverWait(self.browser, 1).until(
                             EC.element_to_be_clickable((By.CSS_SELECTOR, 'div .slotInactive')))
                         slot.click()
-                        button = WebDriverWait(self.browser, 1).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button')))
-                        button.click()
-                        slotText = slot.text
+                        self.browser.find_element(By.CSS_SELECTOR, '#btn_step_next button').click()
+
                         self.bot.send_message(chat_id=chat_id_my,
-                                              text=f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
-                        print(f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
-                        print(f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
+                                         text=f'Появилось место!!!!!! на {day}: \n{slot.text}')
+                        print(f'Появилось место!!!!!! на {day}: \n{slot.text}')
+                        print(f'Машина {truck_number} перенсена на дату {day}: \n{slot.text}')
                         self.bot.send_message(chat_id=chat_id_my,
-                                              text=f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
-                        # self.flag = False
-                        self.browser.save_screenshot(self.screenshot_sucsses)
-                        # self.browser.py.quit()
+                                         text=f'Машина {truck_number} перенсена на дату {day}: \n{slot.text}')
+                        self.flag = False
+                        #self.browser.py.save_screenshot(self.screenshot_sucsses)
+                        self.browser.quit()
                         break
 
                     except TimeoutException:
@@ -279,4 +277,4 @@ class Chernishy:
                         continue
         except Exception as e:
             print(f'Ошибка в input_day_reschedule {str(e)}')
-            self.browser.save_screenshot(self.screenshot_fail)
+            #self.browser.py.save_screenshot(self.screenshot_fail)
