@@ -1,7 +1,8 @@
 from access_file import bot_token_SRV, chat_id_my, TWO_CAPCHA_TOKEN
+from browser.browser import create_browser
+from ya_captcha.captcha import Captcha
 
-import chromedriver_autoinstaller_fix
-from selenium import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,27 +12,19 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 from datetime import datetime, timedelta
 import telebot
-from twocaptcha import TwoCaptcha
-from selenium.webdriver.chrome.options import Options
-import requests
 
 
 class Chernishy:
-    def __init__(self, truck_num, pricep_num, start_date, end_date, time_set, login, password):
+    def __init__(self, truck_num, pricep_num, start_date, end_date, time_set, login, password, gui):
         # Словарь для капчи
         self.dict_resut = {}
-        # Создание объекта опций
-        options = Options()
-        #options.add_argument("--headless")  # Запуск Chrome в режиме без графического интерфейса
-        options.add_argument("--no-sandbox")
-        options.add_argument("--window-size=1920,1080")
-        # Браузер и функции
-        chromedriver_autoinstaller_fix.install()
-        self.browser = webdriver.Chrome(options=options)
+        self.browser = create_browser(gui)
         self.actions = ActionChains(self.browser)
         self.wait = WebDriverWait(self.browser, 5)
+        self.captcha = Captcha(self.browser)
         # Флаг для окончания программы
         self.flag = True
+        # Телеграм бот
         self.bot = telebot.TeleBot(token=bot_token_SRV)
         # Переменные пользователя
         self.truck_coord = truck_num * 22
@@ -59,67 +52,6 @@ class Chernishy:
     def bot_send_message_stop(self):
         self.bot.send_message(chat_id=chat_id_my, text=f'Остановка бота для {self.login}')
 
-    def sender_solve(self, path):
-        solver = TwoCaptcha(TWO_CAPCHA_TOKEN)
-        # bot.send_message(chat_id=chat_id_my, text='2) Изображение отправленно для разгадывания:')
-        print('2) Изображение отправленно для разгадывания:')
-        result = solver.normal(path, param='ru')
-        # bot.send_message(chat_id=chat_id_my, text=f'3) От API пришёл ответ: {result}')
-        print(f'3) От API пришёл ответ: {result}')
-        # API вернёт словарь {'captchaId': '72447681441', 'code': 'gbkd'}
-        # Обновляем словарь для дальнейшего извлечения ID капчи и отправки репорта
-        self.dict_resut.update(result)
-        return result['code']
-
-    def captcha(self):
-        try:
-            # Переключаемся на iframe капчи
-            WebDriverWait(self.browser, 5).until(EC.frame_to_be_available_and_switch_to_it(
-                (By.CSS_SELECTOR, "iframe[title='SmartCaptcha checkbox widget']")))
-
-            # Ожидаем кнопку и кликаем по ней
-            WebDriverWait(self.browser, 5).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, 'input[class="CheckboxCaptcha-Button"]'))).click()
-
-            # Возвращаемся к основному коду на странице
-            self.browser.switch_to.default_content()
-
-            # Переключаемся на новый iframe с картинкой
-            WebDriverWait(self.browser, 5).until(EC.frame_to_be_available_and_switch_to_it(
-                (By.CSS_SELECTOR, "iframe[title='SmartCaptcha advanced widget']")))
-
-            # Хардкодим имя картинки
-            self.img_names = 'img_yandex.png'
-            with open(self.img_names, 'wb') as file:
-                # Извлекаем атрибут src из тега в котором хранится ссылка на изображение
-                img = self.wait.until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'img[alt="Задание с картинкой"]'))).get_attribute(
-                    'src')
-                # Делаем простой requests запрос для скачивания картинки и её записи в файл
-                file.write(requests.get(img).content)
-                # bot.send_message(chat_id=chat_id_my, text=f'1) url image: {img}')
-                print('Poluchena kartinka capcha')
-
-            Chernishy.sender_solve(self, path=self.img_names)
-            # bot.send_message(chat_id=chat_id_my, text=f'4) {dict_resut["code"]}')
-            print(f'4) {self.dict_resut["code"]}')
-
-            # Вставлям необходимую часть словаря dict_resut в котором лежит разгаданное слова с капчи
-            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input.Textinput-Control'))).send_keys(
-                self.dict_resut['code'])
-            time.sleep(1)
-
-            # Кликаем на кнопку отправить
-            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.CaptchaButton_view_action'))).click()
-
-            # Возвращаемся к основному коду на странице
-            self.browser.switch_to.default_content()
-        except Exception as E:
-            # Ошибка возникла, записываем сообщение в журнал
-            print("Произошла ошибка в капче: %s", str(E))
-            # self.browser.py.save_screenshot(self.screenshot_fail)
-            # Отправляем сообщение в чат бота
-            # bot.send_message(chat_id=chat_id_my, text=f"Ошибка в капче: {str(E)}")
 
     def get_main_srv(self):  # Функция для записи куков и входа в систему
         try:
@@ -166,7 +98,7 @@ class Chernishy:
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#chk_copy ._7m08SzSw'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button'))).click()
 
-                Chernishy.captcha(self)
+                self.captcha.captcha()
 
                 Chernishy.input_day_new(self)
 

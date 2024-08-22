@@ -12,11 +12,14 @@ class TokenConfig:
 class SRV:
     login: str
     password: str
+    login_Gena: str
+    password_Gena: str
 
 @dataclass
 class Config:
     token: TokenConfig
     srv: SRV
+
 
 def load_config(path: str | None = None) -> Config:
     env = Env()
@@ -30,6 +33,8 @@ def load_config(path: str | None = None) -> Config:
         ),
         srv=SRV(
             login=env.str("LOGIN_SRV"),
-            password=env.str("PASSWORD_SRV")
+            password=env.str("PASSWORD_SRV"),
+            login_Gena=env.str("login_Gena"),
+            password_Gena=env.str("password_Gena")
         )
     )
