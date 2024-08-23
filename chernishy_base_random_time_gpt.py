@@ -15,7 +15,6 @@ from tg_bot.send_message import bot_send_message
 class Chernishy:
     def __init__(self, truck_num, pricep_num, start_date, end_date, time_set, login, password, gui):
         # Словарь для капчи
-        self.dict_resut = {}
         self.browser = create_browser(gui, time_set)
         self.actions = ActionChains(self.browser)
         self.wait = WebDriverWait(self.browser, 5)
@@ -55,10 +54,11 @@ class Chernishy:
             self.browser.get(url_main)
             if self.is_element_present(By.ID, 'captcha_image'):
                 self.captcha.simple_captcha()
-            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#lyt_chk_clone_1'))).click()
-            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_login input'))).send_keys(self.login)
-            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_password input'))).send_keys(self.password)
-            self.wait.until(EC.element_to_be_clickable((By.ID, 'btn_login'))).click()
+            if self.is_element_present(By.CSS_SELECTOR, '#lyt_chk_clone_1'):
+                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#lyt_chk_clone_1'))).click()
+                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_login input'))).send_keys(self.login)
+                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_password input'))).send_keys(self.password)
+                self.wait.until(EC.element_to_be_clickable((By.ID, 'btn_login'))).click()
             time.sleep(3)
             return self.browser
         except Exception as e:
@@ -67,8 +67,8 @@ class Chernishy:
     def refresh_browser_if_needed(self):
         if self.is_element_present(By.CSS_SELECTOR, '#lyt_chk_clone_1'):
             self.get_main_srv()
-        self.browser.refresh()
-        time.sleep(3)
+        #self.browser.refresh()
+        #time.sleep(3)
 
     def new_zayavka(self):
         while self.flag:
@@ -91,7 +91,8 @@ class Chernishy:
                 self.actions.move_to_element(trans_kind).click(trans_kind).move_by_offset(0, 25).click().perform()
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#chk_copy ._7m08SzSw'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#btn_step_next button'))).click()
-                self.captcha.captcha()
+                if self.is_element_present(By.CSS_SELECTOR, "iframe[title='SmartCaptcha checkbox widget']"):
+                    self.captcha.captcha()
                 self.input_day_new()
             except Exception as e:
                 print(f'Ошибка в new_zayavka', str(e))
@@ -117,7 +118,7 @@ class Chernishy:
                         bot_send_message(f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
                         print(f'Появилось место!!!!!! на {day}: \n{slotText} тек. время: {datetime.now()}')
                         print(f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
-                        bot_send_message(f'Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
+                        bot_send_message(f'Bot #{self.time_set}: Машина {self.truck} и прицеп {self.pricep} записан на {day}: \n{slotText}')
                         continue
                     except TimeoutException:
                         print(f'Нет места для заявки для тягача {self.truck} на: {day} тек. время: {datetime.now()}')

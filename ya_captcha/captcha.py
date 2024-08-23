@@ -46,7 +46,7 @@ class Captcha:
                 (By.CSS_SELECTOR, "iframe[title='SmartCaptcha advanced widget']")))
 
             # Хардкодим имя картинки
-            img_names = 'img_yandex.png'
+            img_names = 'screenshot\img_yandex.png'
             with open(img_names, 'wb') as file:
                 # Извлекаем атрибут src из тега в котором хранится ссылка на изображение
                 img = self.wait.until(
@@ -57,13 +57,13 @@ class Captcha:
                 # bot.send_message(chat_id=chat_id_my, text=f'1) url image: {img}')
                 print('Poluchena kartinka capcha')
 
-            Captcha.sender_solve(self, path=img_names)
+            cod = Captcha.sender_solve(self, path=img_names)
             # bot.send_message(chat_id=chat_id_my, text=f'4) {dict_resut["code"]}')
             print(f'4) {self.dict_resut["code"]}')
 
             # Вставлям необходимую часть словаря dict_resut в котором лежит разгаданное слова с капчи
             self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'input.Textinput-Control'))).send_keys(
-                self.dict_resut['code'])
+                cod)
             time.sleep(1)
 
             # Кликаем на кнопку отправить
@@ -82,8 +82,8 @@ class Captcha:
             # bot.send_message(chat_id=chat_id_my, text=f"Ошибка в капче: {str(E)}")
 
     def simple_captcha(self):
-        # Находим элемент где располагается изображение капчи и делаем его скриншот,
-        # .screenshot('img.png') сохрнаняет скриншот в папке с проектом
+        # Находим элемент, где располагается изображение капчи и делаем его скриншот,
+        # screenshot('img.png') сохрнаняет скриншот в папке с проектом
         try:
             self.wait.until(EC.presence_of_element_located((By.ID, 'captcha_image'))).screenshot('img.png')
             print('1) Скриншот области simple_captcha успешно сделан')

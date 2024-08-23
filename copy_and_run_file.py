@@ -6,7 +6,7 @@ import psutil
 
 script_name = 'chernishy_delta_14days_random_time.py'
 processes = []
-lunches = 12
+lunches = 1
 
 # Проверка наличия скрипта
 if not os.path.isfile(script_name):
@@ -22,10 +22,10 @@ else:
             print(f'Starting process #{i}')
         except Exception as e:
             print(f'Error starting process #{i}: {e}')
-        time.sleep(30)
+        time.sleep(20)
 
-    # Ожидание 15 минут
-    time.sleep(15*60)
+    # Ожидание 50 минут
+    time.sleep(50*60)
 
     # Завершение процессов
     for i in range(lunches):
@@ -35,7 +35,7 @@ else:
                 if proc.name() == 'python.exe' and script_name in proc.cmdline():
                     proc.terminate()
                     try:
-                        proc.wait(timeout=5)  # Ждем, пока процесс завершится
+                        proc.wait(timeout=10)  # Ждем, пока процесс завершится
                     except psutil.TimeoutExpired:
                         proc.kill()  # Принудительно завершаем процесс
                     print(f'Process {proc.pid} terminated.')
