@@ -1,4 +1,4 @@
-from browser.simple_browser import create_browser
+from browser.stable_browser import create_browser
 from ya_captcha.captcha import Captcha
 
 from selenium.webdriver.common.by import By
@@ -9,13 +9,13 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 from datetime import datetime, timedelta
-from tg_bot.send_message import bot_send_message
+from tg_bot.telebot_bot import bot_send_message
 
 
 class Chernishy:
-    def __init__(self, truck_num, pricep_num, start_date, end_date, time_set, login, password, gui):
+    def __init__(self, truck_num, pricep_num, start_date, end_date, bot_id, login, password, gui):
         # Словарь для капчи
-        self.browser = create_browser(gui, time_set)
+        self.browser = create_browser(gui, login, bot_id)
         self.actions = ActionChains(self.browser)
         self.wait = WebDriverWait(self.browser, 5)
         self.captcha = Captcha(self.browser)
@@ -27,11 +27,11 @@ class Chernishy:
         self.start_date = start_date
         self.end_date = end_date
         self.day_count = (end_date - start_date).days + 1
-        self.time_set = time_set
+        self.time_set = bot_id
         self.login = login
         self.password = password
-        self.screenshot_fail = f'screenshot_fail{self.login}_{time_set}.png'
-        self.screenshot_sucsses = f'screenshot_sucsses_{self.login}_{time_set}.png'
+        self.screenshot_fail = f'screenshot_fail{self.login}_{bot_id}.png'
+        self.screenshot_sucsses = f'screenshot_sucsses_{self.login}_{bot_id}.png'
 
     def is_element_present(self, how, what):
         try:
@@ -39,7 +39,6 @@ class Chernishy:
         except (NoSuchElementException, TimeoutException):
             return False
         return True
-
 
     def bot_send_message_start(self):
         bot_send_message(f'Запуск бота для {self.login}')
@@ -54,11 +53,10 @@ class Chernishy:
             self.browser.get(url_main)
             if self.is_element_present(By.ID, 'captcha_image'):
                 self.captcha.simple_captcha()
-            if self.is_element_present(By.CSS_SELECTOR, '#lyt_chk_clone_1'):
-                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#lyt_chk_clone_1'))).click()
-                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_login input'))).send_keys(self.login)
-                self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_password input'))).send_keys(self.password)
-                self.wait.until(EC.element_to_be_clickable((By.ID, 'btn_login'))).click()
+            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#lyt_chk_clone_1'))).click()
+            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_login input'))).send_keys(self.login)
+            self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#txt_password input'))).send_keys(self.password)
+            self.wait.until(EC.element_to_be_clickable((By.ID, 'btn_login'))).click()
             time.sleep(3)
             return self.browser
         except Exception as e:
@@ -96,6 +94,11 @@ class Chernishy:
                 self.input_day_new()
             except Exception as e:
                 print(f'Ошибка в new_zayavka', str(e))
+                self.browser.refresh()
+            # finally:
+            #     if self.is_element_present(By.CSS_SELECTOR, "iframe[title='SmartCaptcha checkbox widget']"):
+            #         self.captcha.captcha_test()
+            #     self.input_day_new()
 
     def input_day_new(self):
         try:

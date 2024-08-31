@@ -7,7 +7,7 @@ import random
 import os
 
 
-def create_browser(gui, user_id):
+def create_browser(gui, login='transstandart39@gmail.com', bot_id=0):
     options = Options()
     if not gui:
         options.add_argument('--headless') # Запуск с интерфейсом или без
@@ -18,8 +18,8 @@ def create_browser(gui, user_id):
     options.add_experimental_option('useAutomationExtension', False)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    base_directory = os.path.join(script_dir, 'users')
-    user_directory = os.path.join(base_directory, f'user_{user_id}')
+    base_directory = os.path.join(script_dir, str(login))
+    user_directory = os.path.join(base_directory, f'user_{bot_id}')
     options.add_argument(f'user-data-dir={user_directory}')
 
     # Браузер и функции

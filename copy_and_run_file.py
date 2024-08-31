@@ -6,14 +6,14 @@ import psutil
 
 script_name = 'chernishy_delta_14days_random_time.py'
 processes = []
-lunches = 1
+lunches = 12
 
 # Проверка наличия скрипта
 if not os.path.isfile(script_name):
     print(f"Script {script_name} not found.")
 else:
     # Запуск процессов
-    for i in range(1, lunches+1):
+    for i in range(lunches+1):
         try:
             # Используем shell=True для Windows, иначе убираем его
             process = subprocess.Popen(args=["start", "python", script_name, str(i)], shell=True, stdout=subprocess.PIPE,
@@ -22,10 +22,10 @@ else:
             print(f'Starting process #{i}')
         except Exception as e:
             print(f'Error starting process #{i}: {e}')
-        time.sleep(20)
+        time.sleep(25)
 
-    # Ожидание 50 минут
-    time.sleep(50*60)
+    # Ожидание 20 минут
+    time.sleep(20*60)
 
     # Завершение процессов
     for i in range(lunches):

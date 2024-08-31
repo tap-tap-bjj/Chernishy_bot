@@ -24,7 +24,7 @@ def create_browser(gui, user_id=1):
 
     # script_dir = os.path.dirname(os.path.abspath(__file__))
     # base_directory = os.path.join(script_dir, 'users')
-    # user_directory = os.path.join(base_directory, f'user_{user_id}')
+    # user_directory = os.path.join(base_directory, f'user_{login}')
     # options.add_argument(f'user-data-dir={user_directory}')
 
     #options.add_argument('--disable-gpu')

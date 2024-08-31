@@ -16,9 +16,15 @@ class SRV:
     password_Gena: str
 
 @dataclass
+class GOS_USL:
+    login: str
+    password: str
+
+@dataclass
 class Config:
     token: TokenConfig
     srv: SRV
+    gos_usl: GOS_USL
 
 
 def load_config(path: str | None = None) -> Config:
@@ -36,5 +42,9 @@ def load_config(path: str | None = None) -> Config:
             password=env.str("PASSWORD_SRV"),
             login_Gena=env.str("login_Gena"),
             password_Gena=env.str("password_Gena")
+        ),
+        gos_usl=GOS_USL(
+            login=env.str("LOGIN_GOS_USL"),
+            password=env.str("PASSWORD_GOS_USL")
         )
     )
